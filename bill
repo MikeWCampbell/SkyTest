@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /> 
+<script src="http://ajax.aspnetcdn.com/ajax/jQuery/jquery-1.11.3.min.js"></script>
+<title>Mike Campbell Sky Bill Test</title>
+
+<style>
+
+#heading {
+	font-style: italic;
+	font-size:1.2em;
+}
+
+#summary, thead {
+	font-weight: bold;
+}
+
+td {
+	padding: 10px;
+}
+
+</style>
+</head>
+<body>
+
+<h2>Sky Monthly Bill</h2>
+
+<h4 id="generated"></h4>
+
+<p>The following bill outlines your Sky charges for:
+	<div id="dates"></div>
+</p>
+
+<p>
+	<h3 id="total"></h3>
+</p>
+
+<p>
+	<div id="payment"></div>
+</p>
+
+<h3>Itemised Bill</h3>
+
+<p>The following bill gives an overview of the charges you have incurred this month:
+	<div id="heading">
+		Subscriptions:
+	</div>
+	<div id="subs"></div>
+	</br>
+
+	<div id="heading">
+		Calls:
+	</div>
+	<div id="calls"></div>
+	</br>
+
+	<div id="heading">
+		SkyStore:
+	</div>
+	<div id="store"></div>
+	
+</p>
+
+<script>
+$(document).ready(function(){
+
+	$.getJSON("http://safe-plains-5453.herokuapp.com/bill.json", function(json) {
+		$("#generated").html('Sent on ' + json.statement.generated);
+		$("#dates").html(json.statement.period.from + ' to ' + json.statement.period.to);
+		$("#total").html('Total Cost: ' + json.total.toFixed(2));
+		$("#payment").html('This bill is due to be paid on or before ' + json.statement.due);
+
+		$("#subs").html(subscriptions(json.package.subscriptions));
+		$("#subs").append('<div id="summary">Subscriptions total: ' + json.package.total.toFixed(2) + '</div>');
+
+		$("#calls").html(callCharges(json.callCharges.calls));
+		$("#calls").append('<div id="summary">Calls total: ' + json.callCharges.total.toFixed(2) + '</div>');
+
+		$("#store").html(purchases(json.skyStore));
+		$("#store").append('<div id="summary">SkyStore purchases total: ' + json.skyStore.total.toFixed(2) + '</div>');
+		
+
+		function subscriptions(subs){
+
+			var subWrite = '<table><thead><tr><td>Type</td><td>Name</td><td>Cost</td></tr></thead><tbody>';
+
+			$(subs).each(function(i){
+				subWrite += '<tr><td>' + capitalize(subs[i].type) + '</td><td>' + subs[i].name + '</td><td>' + subs[i].cost.toFixed(2) + '</td></tr>';
+			});
+
+			subWrite += '</tbody></table>';
+
+			return subWrite;
+		};
+
+
+		function callCharges(calls){
+
+			var callWrite = '<table><thead><tr><td>Called</td><td>Duration</td><td>Cost</td></tr></thead><tbody>';
+
+			$(calls).each(function(i){
+				callWrite += '<tr><td>' + calls[i].called + '</td><td>' + calls[i].duration + '</td><td>' + calls[i].cost.toFixed(2) + '</td></tr>';
+			});
+
+			callWrite += '</tbody></table>';
+
+			return callWrite;
+		};
+
+	
+		function purchases(bought){
+
+			var purcWrite = '<table><thead><tr><td>Type</td><td>Title</td><td>Cost</td></tr></thead><tbody>';
+
+			$(bought.rentals).each(function(i){
+				purcWrite += '<tr><td>Rented</td><td>' + bought.rentals[i].title + '</td><td>' + bought.rentals[i].cost.toFixed(2) + '</td></tr>';
+			});
+
+			$(bought.buyAndKeep).each(function(i){
+				purcWrite += '<tr><td>Bought</td><td>' + bought.buyAndKeep[i].title + '</td><td>' + bought.buyAndKeep[i].cost.toFixed(2) + '</td></tr>';
+			});
+
+			purcWrite += '</tbody></table>';
+
+			return purcWrite;
+		};
+	
+
+		function capitalize(word){
+			var capWord = word.substring(0,1).toUpperCase() + word.substring(1);
+			return capWord;
+		}
+	});
+
+});
+
+</script>
+
+</body>
+</html>
